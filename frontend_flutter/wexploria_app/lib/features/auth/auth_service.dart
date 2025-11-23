@@ -35,10 +35,7 @@ class AuthService {
         return 'Erreur lors de la création du compte';
       }
 
-      // Do NOT create the profile from the client. This can fail because the
-      // auth.users row may not yet be visible to PostgREST, causing a foreign
-      // key constraint violation. Use a Postgres trigger or a backend with
-      // the service_role key to create the profile server-side.
+      
       return null;
     } on PostgrestException catch (e) {
       if (e.code == '23505') { // Violation de contrainte unique

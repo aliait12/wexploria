@@ -28,6 +28,8 @@ import '../admin/admin_home.dart' as admin_page;
 //     {'label': 'Opérateur', 'value': 'operateur'},
 //     {'label': 'Administrateur', 'value': 'admin'},
 //   ];
+
+
 class AuthPage extends StatefulWidget {
   final bool initialIsLogin;
 
