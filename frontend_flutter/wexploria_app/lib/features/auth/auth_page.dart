@@ -29,14 +29,10 @@ import '../admin/admin_home.dart' as admin_page;
 //     {'label': 'Administrateur', 'value': 'admin'},
 //   ];
 
-
 class AuthPage extends StatefulWidget {
   final bool initialIsLogin;
 
-  const AuthPage({
-    super.key,
-    this.initialIsLogin = true,
-  });
+  const AuthPage({super.key, this.initialIsLogin = true});
 
   @override
   State<AuthPage> createState() => _AuthPageState();
@@ -45,19 +41,13 @@ class AuthPage extends StatefulWidget {
 class _AuthPageState extends State<AuthPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _authService = AuthService();
   late bool _isLogin;
-  String _selectedRole = 'client';
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isSocialLoading = false;
-
-  final _roles = [
-    {'label': 'Client', 'value': 'client'},
-    {'label': 'Pilote', 'value': 'pilote'},
-    {'label': 'Opérateur', 'value': 'operateur'},
-    {'label': 'Administrateur', 'value': 'admin'},
-  ];
 
   @override
   void initState() {
@@ -71,6 +61,11 @@ class _AuthPageState extends State<AuthPage> {
       return;
     }
 
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showError('Les mots de passe ne correspondent pas');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -78,7 +73,6 @@ class _AuthPageState extends State<AuthPage> {
     final message = await _authService.signUp(
       email: _emailController.text,
       password: _passwordController.text,
-      role: _selectedRole,
     );
 
     if (!mounted) return;
@@ -149,31 +143,47 @@ class _AuthPageState extends State<AuthPage> {
   void _navigateToRolePage(String? role) {
     switch (role) {
       case 'client':
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const client_page.ClientHomePage()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const client_page.ClientHomePage()),
+        );
         break;
       case 'pilote':
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const pilote_page.PiloteHomePage()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const pilote_page.PiloteHomePage()),
+        );
         break;
       case 'operateur':
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const operateur_page.OperateurHomePage()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const operateur_page.OperateurHomePage(),
+          ),
+        );
         break;
       case 'admin':
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const admin_page.AdminHomePage()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const admin_page.AdminHomePage()),
+        );
         break;
       default:
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const RoleDecider()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const RoleDecider()),
+        );
         if (role == null) {
-          _showError('Profil non encore disponible. Réessayez dans quelques secondes.');
+          _showError(
+            'Profil non encore disponible. Réessayez dans quelques secondes.',
+          );
         }
     }
   }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -207,7 +217,7 @@ class _AuthPageState extends State<AuthPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 40),
-                  
+
                   // Logo and Title
                   Center(
                     child: Column(
@@ -215,7 +225,7 @@ class _AuthPageState extends State<AuthPage> {
                         Container(
                           width: 140,
                           height: 140,
-                          
+
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Image.asset(
@@ -225,10 +235,12 @@ class _AuthPageState extends State<AuthPage> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        
+
                         const SizedBox(height: 8),
                         Text(
-                          _isLogin ? 'Connectez-vous à votre compte' : 'Créez votre compte',
+                          _isLogin
+                              ? 'Connectez-vous à votre compte'
+                              : 'Créez votre compte',
                           style: TextStyle(
                             fontSize: 16,
                             color: const Color.fromARGB(255, 0, 0, 0),
@@ -260,7 +272,10 @@ class _AuthPageState extends State<AuthPage> {
                       controller: _emailController,
                       style: const TextStyle(fontSize: 16),
                       decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
                         border: InputBorder.none,
                         hintText: 'Entrez votre email',
                       ),
@@ -284,7 +299,9 @@ class _AuthPageState extends State<AuthPage> {
                       if (_isLogin)
                         GestureDetector(
                           onTap: () {
-                            _showError('Fonctionnalité mot de passe oublié à implémenter');
+                            _showError(
+                              'Fonctionnalité mot de passe oublié à implémenter',
+                            );
                           },
                           child: Text(
                             'Mot de passe oublié?',
@@ -309,12 +326,17 @@ class _AuthPageState extends State<AuthPage> {
                       obscureText: _obscurePassword,
                       style: const TextStyle(fontSize: 16),
                       decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
                         border: InputBorder.none,
                         hintText: 'Entrez votre mot de passe',
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
                             color: Colors.grey.shade500,
                           ),
                           onPressed: () {
@@ -329,10 +351,9 @@ class _AuthPageState extends State<AuthPage> {
 
                   const SizedBox(height: 20),
 
-                  // Role Dropdown (only for signup)
                   if (!_isLogin) ...[
                     Text(
-                      'Rôle',
+                      'Confirmer le mot de passe',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -346,23 +367,32 @@ class _AuthPageState extends State<AuthPage> {
                         border: Border.all(color: Colors.grey.shade300),
                         color: Colors.white.withOpacity(0.8),
                       ),
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedRole,
-                        decoration: const InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: TextField(
+                        controller: _confirmPasswordController,
+                        obscureText: _obscureConfirmPassword,
+                        style: const TextStyle(fontSize: 16),
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
                           border: InputBorder.none,
+                          hintText: 'Confirmez votre mot de passe',
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirmPassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: Colors.grey.shade500,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureConfirmPassword =
+                                    !_obscureConfirmPassword;
+                              });
+                            },
+                          ),
                         ),
-                        items: _roles.map((role) {
-                          return DropdownMenuItem(
-                            value: role['value'],
-                            child: Text(role['label']!),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedRole = value!;
-                          });
-                        },
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -375,9 +405,7 @@ class _AuthPageState extends State<AuthPage> {
                     width: double.infinity,
                     height: 50,
                     child: _isLoading
-                        ? const Center(
-                            child: CircularProgressIndicator(),
-                          )
+                        ? const Center(child: CircularProgressIndicator())
                         : ElevatedButton(
                             onPressed: _isLogin ? _signIn : _signUp,
                             style: ElevatedButton.styleFrom(
@@ -403,21 +431,15 @@ class _AuthPageState extends State<AuthPage> {
                   // Divider with "or"
                   Row(
                     children: [
-                      Expanded(
-                        child: Divider(color: Colors.grey.shade300),
-                      ),
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'ou',
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                          ),
+                          style: TextStyle(color: Colors.grey.shade500),
                         ),
                       ),
-                      Expanded(
-                        child: Divider(color: Colors.grey.shade300),
-                      ),
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
                     ],
                   ),
 
@@ -443,10 +465,10 @@ class _AuthPageState extends State<AuthPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          _isLogin ? "Vous n'avez pas de compte?" : "Vous avez déjà un compte?",
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                          ),
+                          _isLogin
+                              ? "Vous n'avez pas de compte?"
+                              : "Vous avez déjà un compte?",
+                          style: TextStyle(color: Colors.grey.shade600),
                         ),
                         const SizedBox(width: 8),
                         GestureDetector(
@@ -490,18 +512,13 @@ class _AuthPageState extends State<AuthPage> {
           onPressed: () {
             _showError('Connexion $label à implémenter');
           },
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.grey.shade700,
-          ),
+          style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 20),
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(fontSize: 14),
-              ),
+              Text(label, style: const TextStyle(fontSize: 14)),
             ],
           ),
         ),
@@ -513,6 +530,7 @@ class _AuthPageState extends State<AuthPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 }
