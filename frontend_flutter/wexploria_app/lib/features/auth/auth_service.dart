@@ -11,6 +11,8 @@ class AuthService {
   Future<String?> signUp({
     required String email,
     required String password,
+    String? fullName,
+    String? phone,
   }) async {
     try {
       // 1. Vérifier si l'email existe déjà
@@ -30,7 +32,11 @@ class AuthService {
       final authResponse = await _supabase.auth.signUp(
         email: email,
         password: password,
-        data: {'role': 'client'},
+        data: {
+          'role': 'client',
+          if (fullName != null) 'full_name': fullName,
+          if (phone != null) 'phone_number': phone,
+        },
       );
 
       if (authResponse.user == null) {

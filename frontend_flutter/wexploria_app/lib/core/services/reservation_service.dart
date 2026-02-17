@@ -1,118 +1,111 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../constants/app_constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/reservation.dart';
 
 class ReservationService {
-  final String baseUrl =
-      ApiConstants.baseUrl + ApiConstants.reservationsEndpoint;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-  /// Récupère la liste des réservations avec filtres
-  Future<List<Reservation>> getReservations({
-    String? clientId,
-    String? piloteId,
-    String? activiteId,
-    String? statut,
-    int limit = 20,
-    int offset = 0,
-  }) async {
-    final queryParams = <String, String>{
-      'limit': limit.toString(),
-      'offset': offset.toString(),
-    };
+  /// Créer une nouvelle réservation
+  Future<Reservation> createReservation(Reservation reservation) async {
+    try {
+      final response = await _supabase
+          .from('reservations')
+          .insert(reservation.toJson())
+          .select()
+          .single();
 
-    if (clientId != null) queryParams['client_id'] = clientId;
-    if (piloteId != null) queryParams['pilote_id'] = piloteId;
-    if (activiteId != null) queryParams['activite_id'] = activiteId;
-    if (statut != null) queryParams['statut'] = statut;
-
-    final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
-    final response = await http.get(uri);
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => Reservation.fromJson(json)).toList();
-    } else {
-      throw Exception('Erreur lors de la récupération des réservations');
+      return Reservation.fromJson(response);
+    } catch (e) {
+      throw Exception('Erreur lors de la création de la réservation: $e');
     }
   }
 
-  /// Récupère une réservation par son ID
+  /// Récupérer les réservations d'un client
+  Future<List<Reservation>> getReservationsByClient(String clientId) async {
+    try {
+      final response = await _supabase
+          .from('reservations')
+          .select()
+          .eq('client_id', clientId)
+          .order('date_reservation', ascending: false);
+
+      return (response as List)
+          .map((json) => Reservation.fromJson(json))
+          .toList();
+    } catch (e) {
+      throw Exception('Erreur récupération réservations: $e');
+    }
+  }
+
+  /// Récupérer les détails d'une réservation
   Future<Reservation> getReservationById(String id) async {
-    final response = await http.get(Uri.parse('$baseUrl/$id'));
+    try {
+      final response = await _supabase
+          .from('reservations')
+          .select()
+          .eq('id', id)
+          .single();
 
-    if (response.statusCode == 200) {
-      return Reservation.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Réservation non trouvée');
+      return Reservation.fromJson(response);
+    } catch (e) {
+      throw Exception('Réservation non trouvée: $e');
     }
   }
 
-  /// Crée une nouvelle réservation
-  Future<Reservation> createReservation(
-    Map<String, dynamic> reservationData,
-  ) async {
-    final response = await http.post(
-      Uri.parse(baseUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(reservationData),
-    );
-
-    if (response.statusCode == 201) {
-      return Reservation.fromJson(json.decode(response.body));
-    } else {
-      final error = json.decode(response.body);
-      throw Exception(
-        error['detail'] ?? 'Erreur lors de la création de la réservation',
-      );
+  /// Mettre à jour le statut d'une réservation
+  Future<void> updateReservationStatus(String id, String statut) async {
+    try {
+      await _supabase
+          .from('reservations')
+          .update({'statut': statut})
+          .eq('id', id);
+    } catch (e) {
+      throw Exception('Erreur mise à jour statut: $e');
     }
   }
 
-  /// Met à jour une réservation
-  Future<Reservation> updateReservation(
-    String id,
-    Map<String, dynamic> updates,
-  ) async {
-    final response = await http.patch(
-      Uri.parse('$baseUrl/$id'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(updates),
-    );
-
-    if (response.statusCode == 200) {
-      return Reservation.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Erreur lors de la mise à jour de la réservation');
-    }
+  /// Confirme une réservation (pour l'opérateur)
+  Future<void> confirmReservation(String id) async {
+    await updateReservationStatus(id, 'confirmee');
   }
 
   /// Annule une réservation
-  Future<Map<String, dynamic>> cancelReservation(
-    String id, {
-    String? motif,
-  }) async {
-    final queryParams = motif != null ? {'motif': motif} : <String, String>{};
-    final uri = Uri.parse(
-      '$baseUrl/$id/cancel',
-    ).replace(queryParameters: queryParams);
-
-    final response = await http.post(uri);
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Erreur lors de l\'annulation de la réservation');
+  Future<void> cancelReservation(String id, {String? motif}) async {
+    try {
+      await _supabase
+          .from('reservations')
+          .update({'statut': 'annulee', 'motif_annulation': motif})
+          .eq('id', id);
+    } catch (e) {
+      throw Exception('Erreur annulation: $e');
     }
   }
 
-  /// Confirme une réservation
-  Future<Map<String, dynamic>> confirmReservation(String id) async {
-    final response = await http.post(Uri.parse('$baseUrl/$id/confirm'));
+  /// Récupère les réservations d'un opérateur via ses activités
+  Future<List<Reservation>> getOperateurReservations(String operateurId) async {
+    try {
+      // Join with activites to filter by operateur_id
+      final response = await _supabase
+          .from('reservations')
+          .select('*, activites!inner(id, operateur_id)')
+          .eq('activites.operateur_id', operateurId)
+          .order('date_reservation', ascending: false);
 
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Erreur lors de la confirmation de la réservation');
+      return (response as List)
+          .map((json) => Reservation.fromJson(json))
+          .toList();
+    } catch (e) {
+      // Fallback: fetch directly if operator is pilot
+      try {
+        final response = await _supabase
+            .from('reservations')
+            .select()
+            .eq('pilote_id', operateurId);
+        return (response as List)
+            .map((json) => Reservation.fromJson(json))
+            .toList();
+      } catch (_) {
+        throw Exception('Erreur récupération réservations opérateur: $e');
+      }
     }
   }
 
@@ -120,58 +113,19 @@ class ReservationService {
   Future<List<Reservation>> getClientUpcomingReservations(
     String clientId,
   ) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/client/$clientId/upcoming'),
-    );
+    try {
+      final response = await _supabase
+          .from('reservations')
+          .select()
+          .eq('client_id', clientId)
+          .gte('date_activite', DateTime.now().toIso8601String())
+          .order('date_activite', ascending: true);
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final List<dynamic> reservations = data['reservations'];
-      return reservations.map((json) => Reservation.fromJson(json)).toList();
-    } else {
-      throw Exception(
-        'Erreur lors de la récupération des réservations à venir',
-      );
-    }
-  }
-
-  /// Récupère les réservations d'un opérateur
-  Future<List<Reservation>> getOperateurReservations(String operateurId) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/operateur/$operateurId'),
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => Reservation.fromJson(json)).toList();
-    } else {
-      throw Exception(
-        'Erreur lors de la récupération des réservations de l\'opérateur',
-      );
-    }
-  }
-
-  /// Récupère le calendrier d'un pilote
-  Future<List<Reservation>> getPiloteCalendar(
-    String piloteId, {
-    int? month,
-    int? year,
-  }) async {
-    final queryParams = <String, String>{};
-    if (month != null) queryParams['month'] = month.toString();
-    if (year != null) queryParams['year'] = year.toString();
-
-    final uri = Uri.parse(
-      '$baseUrl/pilote/$piloteId/calendar',
-    ).replace(queryParameters: queryParams);
-    final response = await http.get(uri);
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final List<dynamic> reservations = data['reservations'];
-      return reservations.map((json) => Reservation.fromJson(json)).toList();
-    } else {
-      throw Exception('Erreur lors de la récupération du calendrier');
+      return (response as List)
+          .map((json) => Reservation.fromJson(json))
+          .toList();
+    } catch (e) {
+      throw Exception('Erreur réservations à venir: $e');
     }
   }
 }

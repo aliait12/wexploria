@@ -23,6 +23,7 @@ class Activite {
   final int poidsMinimum;
   final int poidsMaximum;
   final List<String> restrictionsMedicales;
+  final String? imageUrl;
   final String operateurId;
   final double scoreMeteo;
   final double moyenneAvis;
@@ -57,6 +58,7 @@ class Activite {
     this.poidsMinimum = 40,
     this.poidsMaximum = 120,
     this.restrictionsMedicales = const [],
+    this.imageUrl,
     required this.operateurId,
     this.scoreMeteo = 0,
     this.moyenneAvis = 0,
@@ -80,7 +82,11 @@ class Activite {
       prixGroupe: (json['prix_groupe'] as num?)?.toDouble(),
       capaciteMax: json['capacite_max'] as int,
       equipementInclus: json['equipement_inclus'] as bool? ?? true,
-      equipementRequis: (json['equipement_requis'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      equipementRequis:
+          (json['equipement_requis'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       conditionsMeteoMinimales: json['conditions_meteo_minimales'] as String?,
       localisationPrecise: json['localisation_precise'] as String,
       latitude: (json['latitude'] as num?)?.toDouble(),
@@ -88,11 +94,20 @@ class Activite {
       altitudeDepart: json['altitude_depart'] as int?,
       altitudeArrivee: json['altitude_arrivee'] as int?,
       distanceParcours: (json['distance_parcours'] as num?)?.toDouble(),
-      saisonnalite: (json['saisonnalite'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      saisonnalite:
+          (json['saisonnalite'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       ageMinimum: json['age_minimum'] as int? ?? 12,
       poidsMinimum: json['poids_minimum'] as int? ?? 40,
       poidsMaximum: json['poids_maximum'] as int? ?? 120,
-      restrictionsMedicales: (json['restrictions_medicales'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      restrictionsMedicales:
+          (json['restrictions_medicales'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      imageUrl: json['image_url'] as String?,
       operateurId: json['operateur_id'] as String,
       scoreMeteo: (json['score_meteo'] as num?)?.toDouble() ?? 0,
       moyenneAvis: (json['moyenne_avis'] as num?)?.toDouble() ?? 0,
@@ -100,7 +115,9 @@ class Activite {
       tauxRemplissage: (json['taux_remplissage'] as num?)?.toDouble() ?? 0,
       statut: json['statut'] as String? ?? 'actif',
       createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,
     );
   }
 
@@ -130,6 +147,7 @@ class Activite {
       'poids_minimum': poidsMinimum,
       'poids_maximum': poidsMaximum,
       'restrictions_medicales': restrictionsMedicales,
+      'image_url': imageUrl,
       'operateur_id': operateurId,
       'score_meteo': scoreMeteo,
       'moyenne_avis': moyenneAvis,

@@ -1,10 +1,8 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../constants/app_constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/activite.dart';
 
 class ActiviteService {
-  final String baseUrl = ApiConstants.baseUrl + ApiConstants.activitesEndpoint;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   /// Récupère la liste des activités avec filtres
   Future<List<Activite>> getActivites({
@@ -17,61 +15,70 @@ class ActiviteService {
     int limit = 20,
     int offset = 0,
   }) async {
-    final queryParams = <String, String>{
-      'limit': limit.toString(),
-      'offset': offset.toString(),
-    };
+    try {
+      // Start with a Filter Builder
+      PostgrestFilterBuilder query = _supabase.from('activites').select();
 
-    if (typeActivite != null) queryParams['type_activite'] = typeActivite;
-    if (niveauDifficulte != null)
-      queryParams['niveau_difficulte'] = niveauDifficulte;
-    if (prixMin != null) queryParams['prix_min'] = prixMin.toString();
-    if (prixMax != null) queryParams['prix_max'] = prixMax.toString();
-    if (localisation != null) queryParams['localisation'] = localisation;
-    if (operateurId != null) queryParams['operateur_id'] = operateurId;
+      if (typeActivite != null) {
+        query = query.eq('type_activite', typeActivite);
+      }
+      if (niveauDifficulte != null) {
+        query = query.eq('niveau_difficulte', niveauDifficulte);
+      }
+      if (localisation != null) {
+        query = query.ilike('localisation_precise', '%$localisation%');
+      }
+      if (operateurId != null) {
+        query = query.eq('operateur_id', operateurId);
+      }
+      if (prixMin != null) {
+        query = query.gte('prix_base', prixMin);
+      }
+      if (prixMax != null) {
+        query = query.lte('prix_base', prixMax);
+      }
 
-    final uri = Uri.parse(baseUrl).replace(queryParameters: queryParams);
-    final response = await http.get(uri);
+      // Apply pagination (returns a TransformBuilder, so we await it directly or assign to new var)
+      final List<dynamic> response = await query.range(
+        offset,
+        offset + limit - 1,
+      );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => Activite.fromJson(json)).toList();
-    } else {
-      throw Exception('Erreur lors de la récupération des activités');
+      return response.map((json) => Activite.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Erreur lors de la récupération des activités: $e');
     }
   }
 
   /// Récupère une activité par son ID
   Future<Activite> getActiviteById(String id) async {
-    final response = await http.get(Uri.parse('$baseUrl/$id'));
+    try {
+      final response = await _supabase
+          .from('activites')
+          .select()
+          .eq('id', id)
+          .single();
 
-    if (response.statusCode == 200) {
-      return Activite.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Activité non trouvée');
+      return Activite.fromJson(response);
+    } catch (e) {
+      throw Exception('Activité non trouvée: $e');
     }
   }
 
-  /// Récupère la météo et le score Wexploria pour une activité
-  Future<Map<String, dynamic>> getActiviteWeather(String id) async {
-    final response = await http.get(Uri.parse('$baseUrl/$id/weather'));
+  // Placeholder for advanced features that might require Edge Functions or more complex logic
+  // For now, we return default/mock data if not implemented in DB columns yet,
+  // or we can implement these via Supabase RPC if we had them.
 
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Erreur lors de la récupération de la météo');
-    }
+  /// Récupère la météo et le score Wexploria pour une activité (Mock/Placeholder or from DB if stored)
+  Future<Map<String, dynamic>> getActiviteWeather(String id) async {
+    // Dans une future version, on pourrait appeler une Edge Function
+    return {'score_meteo': 8.5, 'conditions': 'Ensoleillé'};
   }
 
   /// Récupère le prix dynamique pour une activité
   Future<Map<String, dynamic>> getDynamicPrice(String id) async {
-    final response = await http.get(Uri.parse('$baseUrl/$id/dynamic-price'));
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Erreur lors du calcul du prix dynamique');
-    }
+    // TODO: Implement Dynamic Pricing Logic via Edge Function
+    return {'current_price': 450, 'factor': 1.0};
   }
 
   /// Obtient des recommandations personnalisées
@@ -80,40 +87,35 @@ class ActiviteService {
     double? latitude,
     double? longitude,
   }) async {
-    final queryParams = <String, String>{};
+    // Pour l'instant on retourne les activités les mieux notées
+    try {
+      final response = await _supabase
+          .from('activites')
+          .select()
+          .order('moyenne_avis', ascending: false)
+          .limit(5);
 
-    if (userId != null) queryParams['user_id'] = userId;
-    if (latitude != null) queryParams['latitude'] = latitude.toString();
-    if (longitude != null) queryParams['longitude'] = longitude.toString();
-
-    final uri = Uri.parse(
-      '$baseUrl/search/recommendations',
-    ).replace(queryParameters: queryParams);
-    final response = await http.get(uri);
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return List<Map<String, dynamic>>.from(data['recommendations']);
-    } else {
-      throw Exception('Erreur lors de la récupération des recommandations');
+      // Mapper vers le format attendu si nécessaire, ou retourner directement
+      // Pour l'instant le code appelant s'attend sans doute à une liste brute
+      // On va adapter pour renvoyer une Liste de Map
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      return [];
     }
   }
 
   /// Crée une nouvelle activité (opérateur uniquement)
   Future<Activite> createActivite(Map<String, dynamic> activiteData) async {
-    final response = await http.post(
-      Uri.parse(baseUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(activiteData),
-    );
+    try {
+      final response = await _supabase
+          .from('activites')
+          .insert(activiteData)
+          .select()
+          .single();
 
-    if (response.statusCode == 201) {
-      return Activite.fromJson(json.decode(response.body));
-    } else {
-      print(
-        'Erreur création activité: ${response.statusCode} - ${response.body}',
-      );
-      throw Exception('Erreur ${response.statusCode}: ${response.body}');
+      return Activite.fromJson(response);
+    } catch (e) {
+      throw Exception('Erreur création activité: $e');
     }
   }
 
@@ -122,25 +124,26 @@ class ActiviteService {
     String id,
     Map<String, dynamic> updates,
   ) async {
-    final response = await http.patch(
-      Uri.parse('$baseUrl/$id'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(updates),
-    );
+    try {
+      final response = await _supabase
+          .from('activites')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
 
-    if (response.statusCode == 200) {
-      return Activite.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Erreur lors de la mise à jour de l\'activité');
+      return Activite.fromJson(response);
+    } catch (e) {
+      throw Exception('Erreur update activité: $e');
     }
   }
 
   /// Supprime une activité
   Future<void> deleteActivite(String id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/$id'));
-
-    if (response.statusCode != 204) {
-      throw Exception('Erreur lors de la suppression de l\'activité');
+    try {
+      await _supabase.from('activites').delete().eq('id', id);
+    } catch (e) {
+      throw Exception('Erreur delete activité: $e');
     }
   }
 }

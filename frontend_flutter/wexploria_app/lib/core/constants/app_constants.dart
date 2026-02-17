@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 /// Couleurs de la palette Wexploria (Gamma)
 class AppColors {
   // Couleurs principales
-  static const Color primary = Color(0xFF6366F1); // Indigo vibrant
-  static const Color primaryDark = Color(0xFF4F46E5);
-  static const Color primaryLight = Color(0xFF818CF8);
+  static const Color primary = Color(0xFF00BCD4); // Cyan turquoise
+  static const Color primaryDark = Color(0xFF0097A7);
+  static const Color primaryLight = Color(0xFF26C6DA);
 
   // Couleurs secondaires
-  static const Color secondary = Color(0xFF10B981); // Vert émeraude
+  static const Color secondary = Color(0xFF10B981); // Vert émeraude (gardé)
   static const Color secondaryDark = Color(0xFF059669);
   static const Color secondaryLight = Color(0xFF34D399);
 
   // Couleurs d'accent
-  static const Color accent = Color(0xFFF59E0B); // Orange doré
+  static const Color accent = Color(0xFFF59E0B); // Orange doré (gardé)
   static const Color accentDark = Color(0xFFD97706);
   static const Color accentLight = Color(0xFFFBBF24);
 

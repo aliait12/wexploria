@@ -7,17 +7,13 @@ class ActivityCard extends StatelessWidget {
   final Activite activite;
   final VoidCallback? onTap;
 
-  const ActivityCard({
-    super.key,
-    required this.activite,
-    this.onTap,
-  });
+  const ActivityCard({super.key, required this.activite, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 4,
-      shadowColor: Colors.black.withOpacity(0.1),
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.08),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
@@ -27,34 +23,72 @@ class ActivityCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image avec badge de score météo
+            // Image with overlays
             Stack(
               children: [
-                // Image de l'activité
+                // Activity Image
                 ClipRRect(
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(AppRadius.lg),
                     topRight: Radius.circular(AppRadius.lg),
                   ),
                   child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: CachedNetworkImage(
-                      imageUrl: 'https://picsum.photos/seed/${activite.id}/800/450',
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: AppColors.textLight.withOpacity(0.1),
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: AppColors.textLight.withOpacity(0.1),
-                        child: const Icon(Icons.image_not_supported),
+                    aspectRatio: 16 / 10,
+                    child:
+                        activite.imageUrl != null &&
+                            activite.imageUrl!.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: activite.imageUrl!,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              color: AppColors.textLight.withOpacity(0.1),
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: AppColors.textLight.withOpacity(0.1),
+                              child: const Icon(Icons.image_not_supported),
+                            ),
+                          )
+                        : CachedNetworkImage(
+                            imageUrl:
+                                'https://picsum.photos/seed/${activite.id}/800/500',
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              color: AppColors.textLight.withOpacity(0.1),
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: AppColors.textLight.withOpacity(0.1),
+                              child: const Icon(Icons.image_not_supported),
+                            ),
+                          ),
+                  ),
+                ),
+
+                // Gradient overlay at bottom for text readability
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 100,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.7),
+                        ],
                       ),
                     ),
                   ),
                 ),
-                
+
                 // Badge Wexploria Score
                 if (activite.scoreMeteo > 0)
                   Positioned(
@@ -62,124 +96,187 @@ class ActivityCard extends StatelessWidget {
                     right: AppSpacing.sm,
                     child: _buildWeatherScoreBadge(),
                   ),
-                
-                // Badge type d'activité
+
+                // Badge "MOST POPULAR" or type
                 Positioned(
                   top: AppSpacing.sm,
                   left: AppSpacing.sm,
-                  child: _buildActivityTypeBadge(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: Text(
+                      'MOST POPULAR',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Title and location overlay on image
+                Positioned(
+                  bottom: AppSpacing.sm,
+                  left: AppSpacing.md,
+                  right: AppSpacing.md,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        activite.titre,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(color: Colors.black45, blurRadius: 4),
+                          ],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              activite.localisationPrecise,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                shadows: [
+                                  Shadow(color: Colors.black45, blurRadius: 4),
+                                ],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            
-            // Contenu
+
+            // Content section
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Titre
-                  Text(
-                    activite.titre,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  
-                  const SizedBox(height: AppSpacing.xs),
-                  
-                  // Localisation
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        size: 16,
-                        color: AppColors.textSecondary,
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Expanded(
-                        child: Text(
-                          activite.localisationPrecise,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  // Rating
+                  if (activite.moyenneAvis > 0)
+                    Row(
+                      children: [
+                        ...List.generate(
+                          5,
+                          (index) => Icon(
+                            index < activite.moyenneAvis.floor()
+                                ? Icons.star
+                                : Icons.star_border,
+                            color: AppColors.accent,
+                            size: 16,
+                          ),
                         ),
+                        const SizedBox(width: AppSpacing.xs),
+                        Text(
+                          '${activite.moyenneAvis.toStringAsFixed(1)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                  const SizedBox(height: AppSpacing.xs),
+
+                  // Description
+                  if (activite.description != null)
+                    Text(
+                      activite.description!,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
                       ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: AppSpacing.sm),
-                  
-                  // Informations supplémentaires
-                  Row(
-                    children: [
-                      // Durée
-                      _buildInfoChip(
-                        icon: Icons.access_time,
-                        label: '${activite.dureeEstimee}min',
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      
-                      // Niveau
-                      _buildInfoChip(
-                        icon: Icons.signal_cellular_alt,
-                        label: activite.niveauDifficulte,
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      
-                      // Capacité
-                      _buildInfoChip(
-                        icon: Icons.people,
-                        label: '${activite.capaciteMax}',
-                      ),
-                    ],
-                  ),
-                  
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
                   const SizedBox(height: AppSpacing.md),
-                  
-                  // Prix et note
+
+                  // Price and Book Now button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Prix
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: AppSpacing.sm,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: AppColors.primaryGradient,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                        child: Text(
-                          '${activite.prixBase.toStringAsFixed(0)}€',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppColors.textWhite,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      
-                      // Note
-                      if (activite.moyenneAvis > 0)
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: AppColors.accent,
-                              size: 20,
+                      // Price
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${activite.prixBase.toStringAsFixed(0)} MAD',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
                             ),
-                            const SizedBox(width: AppSpacing.xs),
+                          ),
+                          if (activite.dureeEstimee > 0)
                             Text(
-                              activite.moyenneAvis.toStringAsFixed(1),
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
+                              '${activite.dureeEstimee}min Trip',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
                               ),
                             ),
+                        ],
+                      ),
+
+                      // Book Now Button
+                      ElevatedButton(
+                        onPressed: onTap,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.full),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Text(
+                              'Book Now',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(Icons.arrow_forward, size: 16),
                           ],
                         ),
+                      ),
                     ],
                   ),
                 ],
@@ -195,27 +292,19 @@ class ActivityCard extends StatelessWidget {
     final score = activite.scoreMeteo;
     Color backgroundColor;
     Color textColor = AppColors.textWhite;
-    IconData icon;
 
     if (score >= 0.8) {
-      backgroundColor = AppColors.success;
-      icon = Icons.wb_sunny;
+      backgroundColor = const Color(0xFF00D4AA);
     } else if (score >= 0.6) {
       backgroundColor = AppColors.secondary;
-      icon = Icons.wb_cloudy;
     } else if (score >= 0.4) {
       backgroundColor = AppColors.warning;
-      icon = Icons.cloud;
     } else {
       backgroundColor = AppColors.error;
-      icon = Icons.cloud_off;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(AppRadius.full),
@@ -230,85 +319,14 @@ class ActivityCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: textColor),
-          const SizedBox(width: AppSpacing.xs),
+          const Icon(Icons.wb_sunny, size: 14, color: Colors.white),
+          const SizedBox(width: 4),
           Text(
-            '${(score * 100).toInt()}%',
-            style: TextStyle(
-              color: textColor,
-              fontSize: AppFontSizes.sm,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivityTypeBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.glassBackground,
-        borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(
-          color: AppColors.glassBorder,
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            ActivityIcons.getIcon(activite.typeActivite),
-            size: 16,
-            color: AppColors.primary,
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          Text(
-            activite.typeActivite.toUpperCase(),
+            'Score ${(score * 10).toStringAsFixed(1)}',
             style: const TextStyle(
-              color: AppColors.primary,
-              fontSize: AppFontSizes.xs,
+              color: Colors.white,
+              fontSize: 11,
               fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoChip({required IconData icon, required String label}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primaryLight.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppColors.primary),
-          const SizedBox(width: AppSpacing.xs),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.primary,
-              fontSize: AppFontSizes.xs,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ],

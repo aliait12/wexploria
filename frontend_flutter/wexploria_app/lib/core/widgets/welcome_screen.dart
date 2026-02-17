@@ -11,9 +11,9 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final List<String> _backgroundImages = [
-    'assets/images/wexploria_logo3.png',
-    'assets/images/homme-chevauchant-sa-planche-de-surf-et-s-amuser.jpg',
-    'assets/images/parapente-tandem-survolant-le-bord-de-mer-avec-de-l-eau-bleue-et-du-ciel-sur-horison-vue-de-parapente-et-blue-lagoon-en-turquie.jpg',
+    'assets/images/welcome1.jpg',
+    'assets/images/welcome2.jpg',
+    'assets/images/welcome3.jpg',
   ];
   
   int _currentImageIndex = 0;
@@ -22,6 +22,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint("DEBUG: WelcomeScreen LOADED - Version with Blue Text");
     _startImageCarousel();
   }
 
@@ -190,40 +191,59 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   // Texte de bienvenue
                   Column(
                     children: [
-                      const Text(
-                        'Welcome',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                          letterSpacing: 0.8,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Container(
+                          width: 40, 
+                          height: 4, 
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Column(
-                        children: [
-                          const Text(
-                            'Explore your world, ride your story Where discovery meets emotion',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500,
-                              height: 1.5,
-                            ),
+                      const SizedBox(height: 24),
+                      RichText(
+                        textAlign: TextAlign.center,
+                        text: const TextSpan(
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                            height: 1.2,
+                            fontFamily: 'Inter', // Ensuring font consistency if global theme isn't set
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Where discovery meets emotion',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                              fontStyle: FontStyle.italic,
-                              height: 1.5,
+                          children: [
+                            TextSpan(
+                              text: 'Explore. Fly.\n',
+                              style: TextStyle(color: Color(0xFF3D8361)), // Palette Green
                             ),
-                          ),
-                        ],
+                            TextSpan(
+                              text: 'Feel Free.',
+                              style: TextStyle(color: Color(0xFF00B4D8)), // Palette Blue
+                            ),
+                          ],
+                        ),
+                      ),
+                       // Hack to color "Feel Free" blue if not splitting text widgets. 
+                       // Better approach: RichText or separate Texts.
+                       // Re-implementing with RichText for "Feel Free" color in next iteration if needed, 
+                       // or simpler: Just use Green as requested for "Marhba" elsewhere, but here image suggests mixed.
+                       // Prompt image show "Explore. Fly." in Green and "Feel Free." in Blue/Cyan.
+                       // Let's match the image provided in prompt "Explore. Fly. Feel Free."
+                    ],
+                  ),
+                  
+                  Column(
+                    children: [
+                      const Text(
+                        'Discover thrilling outdoor adventures with Wexploria. Your journey to unforgettable experiences starts here.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -231,13 +251,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   // Boutons d'action
                   Column(
                     children: [
-                      // Bouton Login (connexion)
+                      // Bouton Start Your Journey
                       SizedBox(
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.black,
+                            backgroundColor: const Color(0xFF2E7D5D), // Green
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28),
@@ -246,58 +266,24 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             shadowColor: Colors.black.withOpacity(0.3),
                           ),
                           onPressed: () => _navigateToAuthPage(isSignUp: false),
-                          child: const Text(
-                            'Login',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // Bouton Sign Up (inscription)
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black87,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
-                              side: BorderSide(
-                                color: Colors.grey.shade400,
-                                width: 2,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Text(
+                                'Start Your Journey',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.8,
+                                ),
                               ),
-                            ),
-                            elevation: 2,
-                            shadowColor: Colors.black12,
-                          ),
-                          onPressed: () => _navigateToAuthPage(isSignUp: true),
-                          child: const Text(
-                            'Sign Up',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.8,
-                            ),
+                              SizedBox(width: 8),
+                              Icon(Icons.arrow_forward),
+                            ],
                           ),
                         ),
                       ),
                     ],
-                  ),
-
-                  // Texte en bas
-                  Text(
-                    'Start your adventure today',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                      fontWeight: FontWeight.w400,
-                    ),
                   ),
                 ],
               ),
